@@ -24,7 +24,7 @@ const useCart = create(
       cartItems: [],
       addItem: (data: CartItem) => {
         const { item, quantity, size } = data;
-        const currentItems = get().cartItems; // all the items already in cart
+        const currentItems = get().cartItems;
         const isExisting = currentItems.find(
           (cartItem) => cartItem.item._id === item._id
         );
@@ -33,7 +33,10 @@ const useCart = create(
           return toast("Item already in cart");
         }
 
-        set({ cartItems: [...currentItems, { item, quantity, size }] });
+        const newCartItem = { item, quantity, size };
+        console.log("Adding item to cart:", newCartItem); // Debug size
+
+        set({ cartItems: [...currentItems, newCartItem] });
         toast.success("Item added to cart", { icon: "🛒" });
       },
       removeItem: (idToRemove: String) => {

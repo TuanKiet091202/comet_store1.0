@@ -31,18 +31,37 @@ const Wishlist = () => {
   }, [user])
 
   const getWishlistProducts = async () => {
-    setLoading(true)
+    try {
+      setLoading(true);
 
-    if (!signedInUser) return
+      if (!signedInUser) {
+        console.warn("User not signed in");
+        setLoading(false);
+        return;
+      }
 
-    const wishlistProducts = await Promise.all(signedInUser.wishlist.map(async (productId) => {
-      const res = await getProductDetails(productId)
-      return res
-    }))
+      const wishlistProducts = await Promise.all(
+        signedInUser.wishlist.map(async (productId) => {
+          try {
+            console.log(`Fetching product ${productId}`);
+            const product = await getProductDetails(productId);
+            return product;
+          } catch (error) {
+            console.error(`Error fetching product ${productId}:`, error);
+            return null;
+          }
+        })
+      );
 
-    setWishlist(wishlistProducts)
-    setLoading(false)
-  }
+      const validProducts = wishlistProducts.filter((product) => product !== null);
+      setWishlist(validProducts);
+    } catch (error) {
+      console.error("Error fetching wishlist products:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   useEffect(() => {
     if (signedInUser) {
@@ -64,7 +83,7 @@ const Wishlist = () => {
 
       <div className="flex flex-wrap justify-center gap-16">
         {wishlist.map((product) => (
-          <ProductCard key={product._id} product={product} updateSignedInUser={updateSignedInUser}/>
+          <ProductCard key={product._id} product={product} updateSignedInUser={updateSignedInUser} />
         ))}
       </div>
     </div>

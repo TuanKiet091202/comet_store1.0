@@ -1,11 +1,11 @@
 "use client";
 
 import useCart from "@/lib/hooks/useCart";
-
 import { useUser } from "@clerk/nextjs";
 import { MinusCircle, PlusCircle, Trash } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie"; // Import thư viện js-cookie
 
 const Cart = () => {
   const router = useRouter();
@@ -18,28 +18,32 @@ const Cart = () => {
   );
   const totalRounded = parseFloat(total.toFixed(2));
 
+  // Tạo đối tượng khách hàng từ thông tin người dùng
   const customer = {
     clerkId: user?.id,
-    email: user?.emailAddresses[0].emailAddress,
+    email: user?.emailAddresses[0]?.emailAddress,
     name: user?.fullName,
   };
 
-  const handleCheckout = async () => {
-    try {
-      if (!user) {
-        router.push("sign-in");
-      } else {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/checkout`, {
-          method: "POST",
-          body: JSON.stringify({ cartItems: cart.cartItems, customer }),
-        });
-        const data = await res.json();
-        window.location.href = data.url;
-        console.log(data);
-      }
-    } catch (err) {
-      console.log("[checkout_POST]", err);
-    }
+  // Hàm lưu thông tin vào cookie và điều hướng đến trang thanh toán
+  const handleCheckout = () => {
+    const cartItemsWithSize = cart.cartItems.map((item) => ({
+      item: item.item,
+      quantity: item.quantity,
+      size: item.size, // Đảm bảo size được thêm vào đây
+    }));
+    // Lưu thông tin khách hàng, giỏ hàng và tổng tiền vào cookie
+    Cookies.set("customer", JSON.stringify(customer), { expires: 1, path: "/" });
+    Cookies.set("cartItems", JSON.stringify(cart.cartItems), { expires: 1, path: "/" });
+    Cookies.set("totalAmount", totalRounded.toString(), { expires: 1, path: "/" });
+
+    // Kiểm tra dữ liệu đã lưu vào cookie
+    console.log("Customer:", Cookies.get("customer"));
+    console.log("Cart Items:", Cookies.get("cartItems"));
+    console.log("Total Amount:", Cookies.get("totalAmount"));
+
+    // Chuyển hướng đến trang thanh toán
+    router.push("/checkout");
   };
 
   return (
@@ -53,7 +57,10 @@ const Cart = () => {
         ) : (
           <div>
             {cart.cartItems.map((cartItem) => (
-              <div className="w-full flex max-sm:flex-col max-sm:gap-3 hover:bg-grey-1 px-4 py-3 items-center max-sm:items-start justify-between">
+              <div
+                key={cartItem.item._id}
+                className="w-full flex max-sm:flex-col max-sm:gap-3 hover:bg-grey-1 px-4 py-3 items-center max-sm:items-start justify-between"
+              >
                 <div className="flex items-center">
                   <Image
                     src={cartItem.item.media[0]}
@@ -64,9 +71,6 @@ const Cart = () => {
                   />
                   <div className="flex flex-col gap-3 ml-4">
                     <p className="text-body-bold">{cartItem.item.title}</p>
-                    {/* {cartItem.color && (
-                      <p className="text-small-medium">{cartItem.color}</p>
-                    )} */}
                     {cartItem.size && (
                       <p className="text-small-medium">{cartItem.size}</p>
                     )}
@@ -99,9 +103,10 @@ const Cart = () => {
       <div className="w-1/3 max-lg:w-full flex flex-col gap-8 bg-grey-1 rounded-lg px-4 py-5">
         <p className="text-heading4-bold pb-4">
           Summary{" "}
-          <span>{`(${cart.cartItems.length} ${
-            cart.cartItems.length > 1 ? "items" : "item"
-          })`}</span>
+          <span>
+            ({cart.cartItems.length}{" "}
+            {cart.cartItems.length > 1 ? "items" : "item"})
+          </span>
         </p>
         <div className="flex justify-between text-body-semibold">
           <span>Total Amount</span>
