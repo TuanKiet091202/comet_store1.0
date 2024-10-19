@@ -27,20 +27,13 @@ const AddressForm = () => {
    }, []);
 
    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setAddress({
-         ...address,
-         [e.target.name]: e.target.value,
-      });
-
-      console.log("Updated Address:", address);
+      const { name, value } = e.target;
+      setAddress((prevAddress) => ({
+         ...prevAddress,
+         [name]: value,
+      }));
+      console.log("Updated Address:", { ...address, [name]: value });
    };
-
-   // Kiểm tra lại cookie sau khi lưu
-   useEffect(() => {
-      const shippingAddress = Cookies.get("shippingAddress");
-      console.log("Shipping Address from Cookie:", shippingAddress);
-   }, []);
-
 
    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -49,41 +42,44 @@ const AddressForm = () => {
       Cookies.set("shippingAddress", JSON.stringify(address), { expires: 1, path: "/" });
 
       try {
-         const customer = Cookies.get('customer');
-         const cartItems = Cookies.get('cartItems');
-         const shippingAddress = Cookies.get('shippingAddress');
-
-         console.log('Customer:', JSON.parse(customer || '{}'));
-         console.log('Cart Items:', JSON.parse(cartItems || '[]'));
-         console.log('Shipping Address:', JSON.parse(shippingAddress || '{}'));
-
-         const res = await fetch("https://comet-admin-tau.vercel.app/api/checkout", {
+         const res = await fetch("http://localhost:3030/create-payment-link", {
             method: "POST",
             headers: {
                "Content-Type": "application/json",
             },
-            credentials: "include",  // Quan trọng cho cookies
+            credentials: "include",
             body: JSON.stringify({
-               customer: JSON.parse(Cookies.get("customer") || "{}"),
-               cartItems: JSON.parse(Cookies.get("cartItems") || "[]"),
-               shippingAddress: JSON.parse(Cookies.get("shippingAddress") || "{}"),
+               orderCode: Number(Date.now().toString().slice(-6)),
+               amount: 100000,
+               description: 'Thanh toán đơn hàng',
+               returnUrl: `/payment_success`,
+               cancelUrl: `/cart`,
             }),
          });
 
-
          if (!res.ok) {
-            const error = await res.text(); // Đọc lỗi chi tiết từ response
+            const error = await res.text();
             console.error('Checkout failed:', error);
-            throw new Error(`Checkout failed: ${res.statusText}`);
+            throw new Error(`Checkout failed: ${error}`);
          }
 
          const data = await res.json();
          console.log('Checkout successful:', data);
-         window.location.href = data.paymentLink;
+
+         // Chuyển hướng đến link thanh toán nếu có
+         if (data.paymentLink) {
+            window.location.href = data.paymentLink; // Chuyển hướng đến link thanh toán
+         } else {
+            console.error('Payment link not found in response.');
+            alert('Có lỗi xảy ra, không tìm thấy link thanh toán.');
+         }
       } catch (error) {
          console.error('Checkout failed:', error);
+         alert('Có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại.');
       }
    };
+
+
 
    return (
       <div className="max-w-md mx-auto py-10">
