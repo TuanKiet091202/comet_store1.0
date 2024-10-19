@@ -57,16 +57,19 @@ const AddressForm = () => {
          console.log('Cart Items:', JSON.parse(cartItems || '[]'));
          console.log('Shipping Address:', JSON.parse(shippingAddress || '{}'));
 
-         const res = await fetch('https://comet-admin-tau.vercel.app/api/checkout', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include', // Đảm bảo cookies được gửi cùng request
+         const res = await fetch("https://comet-admin-tau.vercel.app/api/checkout", {
+            method: "POST",
+            headers: {
+               "Content-Type": "application/json",
+            },
+            credentials: "include",  // Quan trọng cho cookies
             body: JSON.stringify({
-               customer: JSON.parse(Cookies.get('customer') || '{}'),
-               cartItems: JSON.parse(Cookies.get('cartItems') || '[]'),
-               shippingAddress: JSON.parse(Cookies.get('shippingAddress') || '{}'),
+               customer: JSON.parse(Cookies.get("customer") || "{}"),
+               cartItems: JSON.parse(Cookies.get("cartItems") || "[]"),
+               shippingAddress: JSON.parse(Cookies.get("shippingAddress") || "{}"),
             }),
          });
+
 
          if (!res.ok) {
             const error = await res.text(); // Đọc lỗi chi tiết từ response
