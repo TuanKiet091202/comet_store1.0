@@ -8,6 +8,7 @@ const handler = authMiddleware({
 export default async function middleware(req: NextRequest, event: any) {
   const allowedOrigin = process.env.ALLOWED_ORIGIN || "https://comet-store.vercel.app";
 
+
   // Xử lý preflight OPTIONS request
   if (req.method === "OPTIONS") {
     return new NextResponse(null, {
