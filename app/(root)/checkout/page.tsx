@@ -57,7 +57,7 @@ const AddressForm = () => {
          console.log('Cart Items:', JSON.parse(cartItems || '[]'));
          console.log('Shipping Address:', JSON.parse(shippingAddress || '{}'));
 
-         const res = await fetch("https://comet-admin-tau.vercel.app/api/checkout", {
+         const res = await fetch("https://www.comet-admin-tau.vercel.app/api/checkout", {
             method: "POST",
             headers: {
                "Content-Type": "application/json",
