@@ -6,19 +6,29 @@ const handler = authMiddleware({
 });
 
 export default async function middleware(req: NextRequest, event: any) {
+  const allowedOrigin = process.env.ALLOWED_ORIGIN || "https://comet-store.vercel.app";
+
   // Xử lý preflight OPTIONS request
   if (req.method === "OPTIONS") {
-    return new NextResponse(null, { status: 204 });
+    return new NextResponse(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": allowedOrigin,
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Allow-Credentials": "true",
+      },
+    });
   }
 
-  // Tiếp tục qua authMiddleware cho các request khác
+  // Chuyển tiếp cho các request khác
   return handler(req, event);
 }
 
 export const config = {
   matcher: [
-    "/((?!.*\\..*|_next).*)", // Bỏ qua các static files và _next
-    "/",                      // Áp dụng middleware cho root
-    "/(api|trpc)(.*)",         // Áp dụng middleware cho API và trpc routes
+    "/((?!.*\\..*|_next).*)",
+    "/",
+    "/(api|trpc)(.*)",
   ],
 };
